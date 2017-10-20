@@ -105,7 +105,7 @@ void VolleyballPlayer::toXml(QXmlStreamWriter *stream)
     stats.append(digs);
     stats.append(totalBlocks);
     std::sort(stats.begin(), stats.end(), std::greater<int>());
-    bool twoCats = stats[0] - stats[1] < stats[1] - stats[2];
+    bool twoCats = stats[0] - stats[1] < stats[1];
     stream->writeTextElement("labelone", getStatLabel(stats[0]));
     stream->writeTextElement("statone", QString::number(stats[0]));
     if (twoCats) {
@@ -122,9 +122,15 @@ void VolleyballPlayer::toXml(QXmlStreamWriter *stream)
             stream->writeTextElement("labeltwo", "HIT PCT");
             stream->writeTextElement("stattwo", attackPct);
             stream->writeTextElement("numstats", QString::number(2));
-        } else if (label == "SETS") {
-            // Do nothing for now
-            stream->writeTextElement("numstats", QString::number(1));
+        } else if (label == "ASSISTS") {
+            if (digs >= kills) {
+                stream->writeTextElement("labeltwo", "DIGS");
+                stream->writeTextElement("stattwo", QString::number(digs));
+            } else {
+                stream->writeTextElement("labeltwo", "KILLS");
+                stream->writeTextElement("stattwo", QString::number(kills));
+            }
+            stream->writeTextElement("numstats", QString::number(2));
         } else if (label == "DIGS") {
             stream->writeTextElement("labeltwo", "ERRORS");
             stream->writeTextElement("stattwo", QString::number(digErrors));
@@ -145,17 +151,17 @@ void VolleyballPlayer::toXml(QXmlStreamWriter *stream)
 QString VolleyballPlayer::getStatLabel(int stat)
 {
     if (stat == kills) return "KILLS";
-    if (stat == sets) return "SETS";
+    if (stat == sets) return "ASSISTS";
     if (stat == digs) return "DIGS";
-    if (stat == totalBlocks) return "BLK";
+    if (stat == totalBlocks) return "BLOCKS";
     return "";
 }
 
 QString VolleyballPlayer::getStatLabelReverse(int stat)
 {
-    if (stat == totalBlocks) return "BLK";
+    if (stat == totalBlocks) return "BLOCKS";
     if (stat == digs) return "DIGS";
-    if (stat == sets) return "SETS";
+    if (stat == sets) return "ASSISTS";
     if (stat == kills) return "KILLS";
     return "";
 }

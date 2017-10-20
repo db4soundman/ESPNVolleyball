@@ -13,6 +13,8 @@ public:
     void parseFile();
     void writeFile();
 
+    bool checkDefaultFile();
+
     QString getFilepath() const;
     void setFilepath(const QString &value);
 

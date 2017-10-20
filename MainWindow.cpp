@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include <QFileDialog>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -9,6 +10,17 @@ MainWindow::MainWindow(QWidget *parent)
     timer.setInterval(1000*3);
     connect(&timer, SIGNAL(timeout()), this, SLOT(handleTimeout()));
     setCentralWidget(&fileButton);
+    if (reader.checkDefaultFile()) {
+        QMessageBox msg;
+        msg.setText("Found the default file, you should be good.");
+        msg.exec();
+        timer.start();
+
+    } else {
+        QMessageBox msg;
+        msg.setText("No file currently set. Please set a file to begin parsing.");
+        msg.exec();
+    }
 }
 
 MainWindow::~MainWindow()
