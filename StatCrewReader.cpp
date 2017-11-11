@@ -101,11 +101,6 @@ void StatCrewReader::writeFile()
     writer.writeEndElement();
     writer.writeEndElement();
     writer.writeEndDocument();
-//    QFile localFile(EspnVolleyball::getAppDirPath() + "/out.xml");
-//    QTextStream stream(&localFile);
-//    if (localFile.open(QIODevice::ReadWrite)) {
-//        stream << output;
-//    }
     localFile.close();
 }
 

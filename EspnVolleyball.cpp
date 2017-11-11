@@ -25,7 +25,7 @@ EspnVolleyball::checkAppDirectory() {
     if (!appDir.exists()) {
         appDir.mkdir(getAppDirPath());
     }
-
+    window.checkDefaultFile();
 }
 
 int

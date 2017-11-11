@@ -14,6 +14,8 @@ public:
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    void checkDefaultFile();
+    
 private slots:
     void browseForFile();
     void handleTimeout();
