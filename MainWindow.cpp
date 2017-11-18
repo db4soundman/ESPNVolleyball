@@ -4,13 +4,7 @@
 
 void MainWindow::checkDefaultFile()
 {
-    if (reader.checkDefaultFile()) {
-        QMessageBox msg;
-        msg.setText("Found the default file, you should be good.");
-        msg.exec();
-        timer.start();
-
-    } else {
+    if (!reader.checkDefaultFile()) {
         QMessageBox msg;
         msg.setText("No file currently set. Please set a file to begin parsing.");
         msg.exec();
