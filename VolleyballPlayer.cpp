@@ -101,12 +101,12 @@ void VolleyballPlayer::toXml(QXmlStreamWriter *stream)
     QList<int> stats;
     stats.append(kills);
     stats.append(sets);
-    stats.append(aces);
+    if (aces > 1) stats.append(aces);
     stats.append(digs);
     stats.append(totalBlocks);
     std::sort(stats.begin(), stats.end(), std::greater<int>());
-    bool twoCats = stats[0] - stats[1] < stats[1];
-    int numCats = stats[1] - stats[2] < stats[2] ? 3 : twoCats? 2 : 1;
+    bool twoCats = stats[1] != 0;
+    int numCats = stats[2] != 0 ? 3 : twoCats? 2 : 1;
     stream->writeTextElement("labelone", getStatLabel(stats[0]));
     stream->writeTextElement("statone", QString::number(stats[0]));
 
@@ -172,7 +172,7 @@ QString VolleyballPlayer::getStatLabel(int stat)
     if (stat == sets) return "ASSISTS";
     if (stat == digs) return "DIGS";
     if (stat == totalBlocks) return "BLOCKS";
-    return "";
+    return "ACES";
 }
 
 QString VolleyballPlayer::getStatLabelReverse(int stat)
@@ -181,7 +181,7 @@ QString VolleyballPlayer::getStatLabelReverse(int stat)
     if (stat == digs) return "DIGS";
     if (stat == sets) return "ASSISTS";
     if (stat == kills) return "KILLS";
-    return "";
+    return "ACES";
 }
 
 QString VolleyballPlayer::getFullName() const
