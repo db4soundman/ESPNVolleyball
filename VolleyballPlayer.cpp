@@ -106,17 +106,12 @@ void VolleyballPlayer::toXml(QXmlStreamWriter *stream)
     stats.append(totalBlocks);
     std::sort(stats.begin(), stats.end(), std::greater<int>());
     bool twoCats = stats[0] - stats[1] < stats[1];
+    int numCats = stats[1] - stats[2] < stats[2] ? 3 : twoCats? 2 : 1;
     stream->writeTextElement("labelone", getStatLabel(stats[0]));
     stream->writeTextElement("statone", QString::number(stats[0]));
-    if (twoCats) {
-        if (stats[0] == stats[1]) {
-            stream->writeTextElement("labeltwo", getStatLabelReverse(stats[1]));
-        } else {
-            stream->writeTextElement("labeltwo", getStatLabel(stats[1]));
-        }
-        stream->writeTextElement("stattwo", QString::number(stats[1]));
-        stream->writeTextElement("numstats", QString::number(2));
-    } else {
+
+    if (numCats == 1) {
+        // Show supporting stats for the category of the primary stat displayed.
         QString label = getStatLabel(stats[0]);
         if (label == "KILLS") {
             stream->writeTextElement("labeltwo", "HIT PCT");
@@ -141,7 +136,30 @@ void VolleyballPlayer::toXml(QXmlStreamWriter *stream)
             stream->writeTextElement("stattwo", QString::number(blockErrors));
             stream->writeTextElement("numstats", QString::number(2));
         }
+    } else if (numCats > 1) {
+        // We need to get the other stats
+        if (stats[0] == stats[1]) {
+            // Perform reverse lookup
+            stream->writeTextElement("labeltwo", getStatLabelReverse(stats[1]));
+        } else {
+            // It's unique, go get the label
+            stream->writeTextElement("labeltwo", getStatLabel(stats[1]));
+        }
+        stream->writeTextElement("stattwo", QString::number(stats[1]));
 
+        if (numCats == 3) {
+            if (stats[1] == stats[2]) {
+                // Perform reverse lookup
+                stream->writeTextElement("labelthree", getStatLabelReverse(stats[2]));
+            } else {
+                // It's unique, go get the label
+                stream->writeTextElement("labelthree", getStatLabel(stats[2]));
+            }
+            stream->writeTextElement("statthree", QString::number(stats[2]));
+            stream->writeTextElement("numstats", QString::number(3));
+        } else {
+            stream->writeTextElement("numstats", QString::number(2));
+        }
     }
 
     stream->writeEndElement();// player
