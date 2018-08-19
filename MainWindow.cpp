@@ -8,6 +8,8 @@ void MainWindow::checkDefaultFile()
         QMessageBox msg;
         msg.setText("No file currently set. Please set a file to begin parsing.");
         msg.exec();
+    } else{
+        timer.start();
     }
 }
 
