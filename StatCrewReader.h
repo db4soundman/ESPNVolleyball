@@ -26,11 +26,12 @@ signals:
 public slots:
     void fileIsReady(QNetworkReply* reply);
 private:
-     QNetworkAccessManager* manager;
+    QNetworkAccessManager* manager;
     QString filepath;
     QList<VolleyballPlayer> awayTeam,homeTeam;
 
     void nameCorrect(VolleyballPlayer& player, QString name);
+    bool gameStarted;
 };
 
 #endif // STATCREWREADER_H
