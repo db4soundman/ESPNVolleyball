@@ -4,16 +4,20 @@
 #include <QFile>
 #include <QXmlStreamWriter>
 #include <QTextStream>
+#include <QUrl>
+#include <QNetworkRequest>
 #include "EspnVolleyball.h"
 StatCrewReader::StatCrewReader(QObject *parent) : QObject(parent)
 {
     filepath="";
+    manager = new QNetworkAccessManager(this);
+    connect(manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(fileIsReady(QNetworkReply*)) );
 }
 
 void StatCrewReader::parseFile()
 {
     QDomDocument doc;
-    QFile file(filepath);
+    QFile file(EspnVolleyball::getAppDirPath() + "/in.xml");
     try {
         if (!file.open(QIODevice::ReadWrite) || !doc.setContent(&file)) {
             return;
@@ -104,18 +108,29 @@ void StatCrewReader::writeFile()
     localFile.close();
 }
 
+void StatCrewReader::getStats()
+{
+    manager->get(QNetworkRequest(QUrl(filepath)));
+}
+
+void StatCrewReader::fileIsReady( QNetworkReply * reply) {
+  QFile inFile(EspnVolleyball::getAppDirPath() + "/in.xml");
+  inFile.open(QIODevice::ReadWrite);
+  inFile.write(reply->readAll());
+}
+
 bool StatCrewReader::checkDefaultFile()
 {
     QString temp = "";
     QFile defaultFile(EspnVolleyball::getAppDirPath()+"/filepath.txt");
     if (defaultFile.exists() && defaultFile.open(QIODevice::ReadWrite)) {
         QTextStream stream(&defaultFile);
-        temp = stream.readAll().trimmed();
-        QFile firstFile(temp);
-        if (firstFile.exists()) {
-            filepath = temp;
-            return true;
-        }
+        filepath = stream.readAll().trimmed();
+//        QFile firstFile(temp);
+//        if (firstFile.exists()) {
+//            filepath = temp;
+//            return true;
+//        }
     }
     return false;
 }

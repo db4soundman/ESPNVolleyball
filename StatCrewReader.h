@@ -2,6 +2,8 @@
 #define STATCREWREADER_H
 
 #include <QObject>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include "VolleyballPlayer.h"
 
 class StatCrewReader : public QObject
@@ -12,6 +14,7 @@ public:
 
     void parseFile();
     void writeFile();
+    void getStats();
 
     bool checkDefaultFile();
 
@@ -21,8 +24,9 @@ public:
 signals:
 
 public slots:
-
+    void fileIsReady(QNetworkReply* reply);
 private:
+     QNetworkAccessManager* manager;
     QString filepath;
     QList<VolleyballPlayer> awayTeam,homeTeam;
 

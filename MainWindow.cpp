@@ -4,13 +4,14 @@
 
 void MainWindow::checkDefaultFile()
 {
-    if (!reader.checkDefaultFile()) {
-        QMessageBox msg;
-        msg.setText("No file currently set. Please set a file to begin parsing.");
-        msg.exec();
-    } else{
+//    if (!reader.checkDefaultFile()) {
+//        QMessageBox msg;
+//        msg.setText("No file currently set. Please set a file to begin parsing.");
+//        msg.exec();
+//    } else{
+    reader.checkDefaultFile();
         timer.start();
-    }
+//    }
 }
 
 MainWindow::MainWindow(QWidget *parent)
@@ -41,6 +42,7 @@ void MainWindow::browseForFile()
 
 void MainWindow::handleTimeout()
 {
+    reader.getStats();
     reader.parseFile();
     reader.writeFile();
 }
