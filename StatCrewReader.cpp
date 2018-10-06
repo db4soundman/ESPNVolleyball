@@ -37,14 +37,14 @@ void StatCrewReader::parseFile()
                 if (attribute.name() == "game") {
                     if (attribute.value() > "1") {
                         gameStarted = true;
-                        break;
                     } else if (attribute.value() == "1") {
                         inGame1 = true;
                     }
-                } else if (inGame1 && ((attribute.name() == "vpoints" && attribute.value() > "0") ||
-                                       (attribute.name() == "hpoints" && attribute.value() > "0"))) {
+                } if (inGame1 && ((attribute.name() == "vpoints" && attribute.value() > "1") ||
+                                       (attribute.name() == "hpoints" && attribute.value() > "1"))) {
                     gameStarted = true;
-                } else if (attribute.name() == "complete" && attribute.value().toLower() == "y") {
+                }
+                if (attribute.name() == "complete" && attribute.value().toLower() == "y") {
                     gameStarted = false;
                     inGame1 = false;
                     break;
