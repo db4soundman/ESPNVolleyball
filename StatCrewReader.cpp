@@ -11,6 +11,7 @@ StatCrewReader::StatCrewReader(QObject *parent) : QObject(parent)
 {
     filepath="";
     gameStarted = false;
+    inGame1 = false;
     manager = new QNetworkAccessManager(this);
     connect(manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(fileIsReady(QNetworkReply*)) );
 
@@ -27,15 +28,22 @@ void StatCrewReader::parseFile()
             awayTeam.clear();
             homeTeam.clear();
         }
-        QDomNode statusNode = doc.elementsByTagName("status").item(0);
-        QDomNamedNodeMap atts = statusNode.attributes();
-        for (int x = 0; x < atts.length(); x++) {
-            auto mapItem = atts.item(x);
-            auto attribute = mapItem.toAttr();
-            if (attribute.name() == "game") {
-                if (attribute.value() != "0") {
+        if (!gameStarted) {
+            QDomNode statusNode = doc.elementsByTagName("status").item(0);
+            QDomNamedNodeMap atts = statusNode.attributes();
+            for (int x = 0; x < atts.length(); x++) {
+                auto mapItem = atts.item(x);
+                auto attribute = mapItem.toAttr();
+                if (attribute.name() == "game") {
+                    if (attribute.value() > "1") {
+                        gameStarted = true;
+                        break;
+                    } else if (attribute.value() == "1") {
+                        inGame1 = true;
+                    }
+                } else if (inGame1 && ((attribute.name() == "vpoints" && attribute.value() > "0") ||
+                                       (attribute.name() == "hpoints" && attribute.value() > "0"))) {
                     gameStarted = true;
-                    break;
                 }
             }
         }

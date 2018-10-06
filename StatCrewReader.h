@@ -32,6 +32,7 @@ private:
 
     void nameCorrect(VolleyballPlayer& player, QString name);
     bool gameStarted;
+    bool inGame1;
 };
 
 #endif // STATCREWREADER_H
