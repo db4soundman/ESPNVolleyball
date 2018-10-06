@@ -44,6 +44,10 @@ void StatCrewReader::parseFile()
                 } else if (inGame1 && ((attribute.name() == "vpoints" && attribute.value() > "0") ||
                                        (attribute.name() == "hpoints" && attribute.value() > "0"))) {
                     gameStarted = true;
+                } else if (attribute.name() == "complete" && attribute.value().toLower() == "y") {
+                    gameStarted = false;
+                    inGame1 = false;
+                    break;
                 }
             }
         }
