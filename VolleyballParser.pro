@@ -7,7 +7,7 @@
 
 QT       += core gui xml
 CONFIG += c++11
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets network
 
 TARGET = VolleyballParser
 TEMPLATE = app
