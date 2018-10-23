@@ -14,6 +14,9 @@ StatCrewReader::StatCrewReader(QObject *parent) : QObject(parent)
     inGame1 = false;
     manager = new QNetworkAccessManager(this);
     connect(manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(fileIsReady(QNetworkReply*)) );
+    gameNum = 0;
+    hScore = 0;
+    aScore = 0;
 
 }
 
@@ -101,6 +104,19 @@ void StatCrewReader::parseFile()
                     }
                 }
             }
+            QDomNode statusNode = doc.elementsByTagName("status").item(0);
+            QDomNamedNodeMap atts = statusNode.attributes();
+            for (int x = 0; x < atts.length(); x++) {
+                auto mapItem = atts.item(x);
+                auto attribute = mapItem.toAttr();
+                if (attribute.name() == "game") {
+                    gameNum = attribute.value().toInt();
+                } else if (attribute.name() == "hscore") {
+                    hScore = attribute.value().toInt();
+                } else if (attribute.name() == "vscore") {
+                    aScore = attribute.value().toInt();
+                }
+            }
         }
     } catch (...) {
 
@@ -132,6 +148,38 @@ void StatCrewReader::writeFile()
             p.toXml(&writer);
         }
         writer.writeEndElement();
+        if (gameNum < 2) {
+            writer.writeTextElement("status", "Set 1 (Best of 5)");
+        } else if (gameNum < 5) {
+            QString setText = "Set " + QString::number(gameNum) + " ";
+            if (hScore == aScore) {
+                setText += "(Tied " + QString::number(hScore) + "-" + QString::number(hScore) +")";
+            } else if (hScore > aScore) {
+                setText += "("+ homeName +" leads " + QString::number(hScore) + "-" + QString::number(aScore) +")";
+            } else {
+                setText += "("+ awayName +" leads " + QString::number(aScore) + "-" + QString::number(hScore) +")";
+            }
+            writer.writeTextElement("status", setText);
+        } else {
+            writer.writeTextElement("status", "Set 5 (Tied 2-2)");
+        }
+
+        writer.writeEndElement();
+        writer.writeEndDocument();
+        localFile.close();
+    } else {
+        QFile localFile(EspnVolleyball::getAppDirPath() + "/out.xml");
+        //    QTextStream stream(&localFile);
+        if (!localFile.open(QIODevice::ReadWrite)) {
+            return;
+        }
+        //    localFile.close();
+        QString output = "";
+        QXmlStreamWriter writer(&localFile);
+        writer.writeStartDocument();
+        writer.writeStartElement("gamestats");
+
+        writer.writeTextElement("status", "Set 1 (Best of 5)");
         writer.writeEndElement();
         writer.writeEndDocument();
         localFile.close();
@@ -147,6 +195,16 @@ void StatCrewReader::fileIsReady( QNetworkReply * reply) {
   QFile inFile(EspnVolleyball::getAppDirPath() + "/in.xml");
   inFile.open(QIODevice::ReadWrite);
   inFile.write(reply->readAll());
+}
+
+void StatCrewReader::setAwayName(QString name)
+{
+    awayName = name;
+}
+
+void StatCrewReader::setHomeName(QString name)
+{
+    homeName = name;
 }
 
 bool StatCrewReader::checkDefaultFile()

@@ -17,9 +17,11 @@ SOURCES += main.cpp\
         MainWindow.cpp \
     VolleyballPlayer.cpp \
     StatCrewReader.cpp \
-    EspnVolleyball.cpp
+    EspnVolleyball.cpp \
+    MainUi.cpp
 
 HEADERS  += MainWindow.h \
     VolleyballPlayer.h \
     StatCrewReader.h \
-    EspnVolleyball.h
+    EspnVolleyball.h \
+    MainUi.h

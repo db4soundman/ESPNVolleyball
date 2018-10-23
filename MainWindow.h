@@ -5,6 +5,7 @@
 #include <QPushButton>
 #include "StatCrewReader.h"
 #include <QTimer>
+#include "MainUi.h"
 
 class MainWindow : public QMainWindow
 {
@@ -21,6 +22,7 @@ private slots:
     void handleTimeout();
 
 private:
+    MainUi ui;
     QPushButton fileButton;
     StatCrewReader reader;
     QTimer timer;

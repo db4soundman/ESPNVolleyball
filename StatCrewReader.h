@@ -25,12 +25,15 @@ signals:
 
 public slots:
     void fileIsReady(QNetworkReply* reply);
+    void setAwayName(QString name);
+    void setHomeName(QString name);
 private:
     QNetworkAccessManager* manager;
-    QString filepath;
+    QString filepath, homeName, awayName;
     QList<VolleyballPlayer> awayTeam,homeTeam;
 
     void nameCorrect(VolleyballPlayer& player, QString name);
+    int gameNum, hScore, aScore;
     bool gameStarted;
     bool inGame1;
 };

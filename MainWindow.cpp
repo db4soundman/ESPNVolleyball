@@ -21,7 +21,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&fileButton, SIGNAL(clicked(bool)), this, SLOT(browseForFile()));
     timer.setInterval(1000*3);
     connect(&timer, SIGNAL(timeout()), this, SLOT(handleTimeout()));
-    setCentralWidget(&fileButton);
+    setCentralWidget(&ui);
+
+    connect(&ui.awayName, SIGNAL(textEdited(QString)), &reader, SLOT(setAwayName(QString)));
+    connect(&ui.homeName, SIGNAL(textEdited(QString)), &reader, SLOT(setHomeName(QString)));
 }
 
 MainWindow::~MainWindow()
