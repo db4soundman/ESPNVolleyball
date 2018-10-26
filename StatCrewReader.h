@@ -34,8 +34,8 @@ private:
     QList<VolleyballPlayer> awayTeam,homeTeam;
 
     void nameCorrect(VolleyballPlayer& player, QString name);
-    int gameNum, hScore, aScore;
-    bool gameStarted;
+    int gameNum, hScore, aScore, hPoints, aPoints;
+    bool gameStarted, gameOver;
     bool inGame1;
 };
 

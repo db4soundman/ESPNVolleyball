@@ -17,7 +17,9 @@ StatCrewReader::StatCrewReader(QObject *parent) : QObject(parent)
     gameNum = 0;
     hScore = 0;
     aScore = 0;
-
+    hPoints = 0;
+    aPoints = 0;
+    gameOver = false;
 }
 
 void StatCrewReader::parseFile()
@@ -44,7 +46,7 @@ void StatCrewReader::parseFile()
                         inGame1 = true;
                     }
                 } if (inGame1 && ((attribute.name() == "vpoints" && attribute.value() > "1") ||
-                                       (attribute.name() == "hpoints" && attribute.value() > "1"))) {
+                                  (attribute.name() == "hpoints" && attribute.value() > "1"))) {
                     gameStarted = true;
                 }
                 if (attribute.name() == "complete" && attribute.value().toLower() == "y") {
@@ -115,6 +117,12 @@ void StatCrewReader::parseFile()
                     hScore = attribute.value().toInt();
                 } else if (attribute.name() == "vscore") {
                     aScore = attribute.value().toInt();
+                }else if (attribute.name() == "hpoints") {
+                    hPoints = attribute.value().toInt();
+                } else if (attribute.name() == "vpoints") {
+                    aPoints = attribute.value().toInt();
+                } if (attribute.name() == "complete" && attribute.value().toLower() == "y") {
+                    gameOver = true;
                 }
             }
         }
@@ -148,10 +156,23 @@ void StatCrewReader::writeFile()
             p.toXml(&writer);
         }
         writer.writeEndElement();
+        QString setText = "";
         if (gameNum < 2) {
-            writer.writeTextElement("status", "Set 1 (Best of 5)");
+            setText = "Set 1 (Best of 5)";
+            int scoreDif = abs(hPoints - aPoints);
+            if (hPoints == 24 && aPoints < 24) {
+                setText = homeName + " Set Point";
+            } else if (aPoints == 24 && hPoints < 24) {
+                setText = awayName + " Set Point";
+            } else if (aPoints >= 24  && hPoints >= 24 && scoreDif != 0) {
+                if (hPoints > aPoints) {
+                    setText = homeName + " Set Point";
+                } else {
+                    setText = awayName + " Set Point";
+                }
+            }
         } else if (gameNum < 5) {
-            QString setText = "Set " + QString::number(gameNum) + " ";
+            setText = "Set " + QString::number(gameNum) + " ";
             if (hScore == aScore) {
                 setText += "(Tied " + QString::number(hScore) + "-" + QString::number(hScore) +")";
             } else if (hScore > aScore) {
@@ -159,11 +180,42 @@ void StatCrewReader::writeFile()
             } else {
                 setText += "("+ awayName +" leads " + QString::number(aScore) + "-" + QString::number(hScore) +")";
             }
-            writer.writeTextElement("status", setText);
+            int scoreDif = abs(hPoints - aPoints);
+            if (hPoints == 24 && aPoints < 24) {
+                setText = homeName + (hScore != 2 ? " Set Point" : " Match Point");
+            } else if (aPoints == 24 && hPoints < 24) {
+                setText = awayName + (aScore != 2 ? " Set Point" : " Match Point");
+            } else if (aPoints >= 24  && hPoints >= 24 && scoreDif != 0) {
+                if (hPoints > aPoints) {
+                    setText = homeName + (hScore != 2 ? " Set Point" : " Match Point");
+                } else {
+                    setText = awayName +  (aScore != 2 ? " Set Point" : " Match Point");
+                }
+            }
         } else {
-            writer.writeTextElement("status", "Set 5 (Tied 2-2)");
-        }
+            setText = "Set 5 (Tied 2-2)";
 
+            int scoreDif = abs(hPoints - aPoints);
+            if (hPoints == 14 && aPoints < 14) {
+                setText = homeName + " Match Point";
+            } else if (aPoints == 14 && hPoints < 14) {
+                setText = awayName + " Match Point";
+            } else if (aPoints >= 14  && hPoints >= 14 && scoreDif != 0) {
+                if (hPoints > aPoints) {
+                    setText = homeName + " Match Point";
+                } else {
+                    setText = awayName + " Match Point";
+                }
+            }
+        }
+        if (gameOver) {
+            if (hScore > aScore) {
+                setText = homeName + " wins " + QString::number(hScore) + "-" + QString::number(aScore);
+            } else {
+                setText = awayName + " wins " + QString::number(aScore) + "-" + QString::number(hScore);
+            }
+        }
+        writer.writeTextElement("status", setText);
         writer.writeEndElement();
         writer.writeEndDocument();
         localFile.close();
@@ -192,9 +244,9 @@ void StatCrewReader::getStats()
 }
 
 void StatCrewReader::fileIsReady( QNetworkReply * reply) {
-  QFile inFile(EspnVolleyball::getAppDirPath() + "/in.xml");
-  inFile.open(QIODevice::ReadWrite);
-  inFile.write(reply->readAll());
+    QFile inFile(EspnVolleyball::getAppDirPath() + "/in.xml");
+    inFile.open(QIODevice::ReadWrite);
+    inFile.write(reply->readAll());
 }
 
 void StatCrewReader::setAwayName(QString name)
@@ -219,11 +271,11 @@ bool StatCrewReader::checkDefaultFile()
     if (defaultFile.exists() && defaultFile.open(QIODevice::ReadWrite)) {
         QTextStream stream(&defaultFile);
         filepath = stream.readAll().trimmed();
-//        QFile firstFile(temp);
-//        if (firstFile.exists()) {
-//            filepath = temp;
-//            return true;
-//        }
+        //        QFile firstFile(temp);
+        //        if (firstFile.exists()) {
+        //            filepath = temp;
+        //            return true;
+        //        }
     }
     return false;
 }
