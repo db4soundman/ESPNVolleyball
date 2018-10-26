@@ -19,7 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     fileButton.setText("Set File");
     connect(&fileButton, SIGNAL(clicked(bool)), this, SLOT(browseForFile()));
-    timer.setInterval(1000*3);
+    timer.setInterval(1500);
     connect(&timer, SIGNAL(timeout()), this, SLOT(handleTimeout()));
     setCentralWidget(&ui);
 

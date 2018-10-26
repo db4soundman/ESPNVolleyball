@@ -27,9 +27,10 @@ public slots:
     void fileIsReady(QNetworkReply* reply);
     void setAwayName(QString name);
     void setHomeName(QString name);
+    void setWinningChar(QString value);
 private:
     QNetworkAccessManager* manager;
-    QString filepath, homeName, awayName;
+    QString filepath, homeName, awayName, setWinnerChar;
     QList<VolleyballPlayer> awayTeam,homeTeam;
 
     void nameCorrect(VolleyballPlayer& player, QString name);

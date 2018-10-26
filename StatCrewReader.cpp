@@ -207,6 +207,11 @@ void StatCrewReader::setHomeName(QString name)
     homeName = name;
 }
 
+void StatCrewReader::setWinningChar(QString value)
+{
+    setWinnerChar = value;
+}
+
 bool StatCrewReader::checkDefaultFile()
 {
     QString temp = "";

@@ -11,7 +11,7 @@ class MainUi : public QWidget
 public:
     explicit MainUi(QWidget *parent = nullptr);
 
-    QLineEdit homeName, awayName;
+    QLineEdit homeName, awayName, setWinnerMarking;
 
 signals:
 
