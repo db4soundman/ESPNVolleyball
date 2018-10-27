@@ -32,7 +32,7 @@ private:
     QNetworkAccessManager* manager;
     QString filepath, homeName, awayName, setWinnerChar;
     QList<VolleyballPlayer> awayTeam,homeTeam;
-
+    QList<int> awayScores, homeScores;
     void nameCorrect(VolleyballPlayer& player, QString name);
     int gameNum, hScore, aScore, hPoints, aPoints;
     bool gameStarted, gameOver;

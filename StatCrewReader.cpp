@@ -5,6 +5,7 @@
 #include <QXmlStreamWriter>
 #include <QTextStream>
 #include <QUrl>
+#include <QStringList>
 #include <QNetworkRequest>
 #include "EspnVolleyball.h"
 StatCrewReader::StatCrewReader(QObject *parent) : QObject(parent)
@@ -20,6 +21,10 @@ StatCrewReader::StatCrewReader(QObject *parent) : QObject(parent)
     hPoints = 0;
     aPoints = 0;
     gameOver = false;
+    for(int i = 0; i < 5; i++) {
+        awayScores.append(0);
+        homeScores.append(0);
+    }
 }
 
 void StatCrewReader::parseFile()
@@ -33,98 +38,133 @@ void StatCrewReader::parseFile()
             awayTeam.clear();
             homeTeam.clear();
         }
-        if (!gameStarted) {
-            QDomNode statusNode = doc.elementsByTagName("status").item(0);
-            QDomNamedNodeMap atts = statusNode.attributes();
-            for (int x = 0; x < atts.length(); x++) {
-                auto mapItem = atts.item(x);
-                auto attribute = mapItem.toAttr();
-                if (attribute.name() == "game") {
-                    if (attribute.value() > "1") {
+        try {
+            if (!gameStarted) {
+                QDomNode statusNode = doc.elementsByTagName("status").item(0);
+                QDomNamedNodeMap atts = statusNode.attributes();
+                for (int x = 0; x < atts.length(); x++) {
+                    auto mapItem = atts.item(x);
+                    auto attribute = mapItem.toAttr();
+                    if (attribute.name() == "game") {
+                        if (attribute.value() > "1") {
+                            gameStarted = true;
+                        } else if (attribute.value() == "1") {
+                            inGame1 = true;
+                        }
+                    } if (inGame1 && ((attribute.name() == "vpoints" && attribute.value() > "1") ||
+                                      (attribute.name() == "hpoints" && attribute.value() > "1"))) {
                         gameStarted = true;
-                    } else if (attribute.value() == "1") {
-                        inGame1 = true;
                     }
-                } if (inGame1 && ((attribute.name() == "vpoints" && attribute.value() > "1") ||
-                                  (attribute.name() == "hpoints" && attribute.value() > "1"))) {
-                    gameStarted = true;
-                }
-                if (attribute.name() == "complete" && attribute.value().toLower() == "y") {
-                    gameStarted = false;
-                    inGame1 = false;
-                    break;
+                    if (attribute.name() == "complete" && attribute.value().toLower() == "y") {
+                        gameStarted = false;
+                        inGame1 = false;
+                        break;
+                    }
                 }
             }
-        }
-        if (gameStarted) {
-            QDomNodeList teams = doc.elementsByTagName("team");
-            for (int i = 0; i < teams.size(); i++) {
-                QDomNode team = teams.item(i);
-                QDomElement playerData = team.firstChildElement("player");
-                while (!playerData.isNull()) {
-                    VolleyballPlayer player;
-                    if (playerData.attribute("name") == "TEAM") {
-                        playerData = playerData.nextSiblingElement("player");
-                        continue;
+            if (gameStarted) {
+                bool visitor = true;
+                QDomNodeList teams = doc.elementsByTagName("team");
+                for (int i = 0; i < teams.size(); i++) {
+                    QDomNode team = teams.item(i);
+                    QDomNamedNodeMap atts = team.attributes();
+                    for (int x = 0; x < atts.length(); x++) {
+                        auto mapItem = atts.item(x);
+                        auto attribute = mapItem.toAttr();
+                        if (attribute.name() == "vh") {
+                            if (attribute.value() == "V" || attribute.value() == "v") {
+                                visitor = true;
+                            } else {
+                                visitor = false;
+                            }
+                            break;
+                        }
                     }
-                    player.setFullName(playerData.attribute("name"));
-                    player.setUniformStr(playerData.attribute("uni"));
-                    if (playerData.attribute("gp") != "0") {
-                        player.setAttackPct(playerData.firstChildElement("attack").attribute("pct"));
-                        player.setKills(playerData.firstChildElement("attack").attribute("k").toInt());
-                        player.setAtkErrors(playerData.firstChildElement("attack").attribute("e").toInt());
 
-                        player.setSets(playerData.firstChildElement("set").attribute("a").toInt());
-
-                        player.setServeErrors(playerData.firstChildElement("serve").attribute("se").toInt());
-                        player.setAces(playerData.firstChildElement("serve").attribute("sa").toInt());
-
-
-                        player.setDigs(playerData.firstChildElement("defense").attribute("dig").toInt());
-                        player.setDigErrors(playerData.firstChildElement("defense").attribute("re").toInt());
-
-                        player.setTotalBlocks(playerData.firstChildElement("block").attribute("tb").toInt());
-                        player.setBlockErrors(playerData.firstChildElement("block").attribute("be").toInt());
-
-                        QDomNamedNodeMap atts = team.attributes();
-                        for (int x = 0; x < atts.length(); x++) {
-                            auto mapItem = atts.item(x);
-                            auto attribute = mapItem.toAttr();
-                            if (attribute.name() == "vh") {
-                                if (attribute.value() == "V" || attribute.value() == "v") {
-                                    awayTeam.append(player);
+                    QDomElement linescore = team.firstChildElement("linescore");
+                    QDomNamedNodeMap lineAtts = linescore.attributes();
+                    for (int x = 0; x < lineAtts.length(); x++) {
+                        auto mapItem = lineAtts.item(x);
+                        auto attribute = mapItem.toAttr();
+                        if (attribute.name() == "line") {
+                            QStringList scores = attribute.value().split(",");
+                            for (int x = 0; x < scores.length(); x++) {
+                                if (visitor) {
+                                    awayScores[x] = scores.at(x).toInt();
                                 } else {
-                                    homeTeam.append(player);
+                                    homeScores[x] = scores.at(x).toInt();
                                 }
-                                playerData = playerData.nextSiblingElement("player");
-                                break;
                             }
                         }
                     }
-                    else {
-                        playerData = playerData.nextSiblingElement("player");
+                    QDomElement playerData = team.firstChildElement("player");
+                    while (!playerData.isNull()) {
+                        try {
+                            VolleyballPlayer player;
+                            if (playerData.attribute("name") == "TEAM") {
+                                playerData = playerData.nextSiblingElement("player");
+                                continue;
+                            }
+                            player.setFullName(playerData.attribute("name"));
+                            player.setUniformStr(playerData.attribute("uni"));
+                            if (playerData.attribute("gp") != "0") {
+                                player.setAttackPct(playerData.firstChildElement("attack").attribute("pct"));
+                                player.setKills(playerData.firstChildElement("attack").attribute("k").toInt());
+                                player.setAtkErrors(playerData.firstChildElement("attack").attribute("e").toInt());
+
+                                player.setSets(playerData.firstChildElement("set").attribute("a").toInt());
+
+                                player.setServeErrors(playerData.firstChildElement("serve").attribute("se").toInt());
+                                player.setAces(playerData.firstChildElement("serve").attribute("sa").toInt());
+
+
+                                player.setDigs(playerData.firstChildElement("defense").attribute("dig").toInt());
+                                player.setDigErrors(playerData.firstChildElement("defense").attribute("re").toInt());
+
+                                player.setTotalBlocks(playerData.firstChildElement("block").attribute("tb").toInt());
+                                player.setBlockErrors(playerData.firstChildElement("block").attribute("be").toInt());
+
+                                QDomNamedNodeMap atts = team.attributes();
+                                for (int x = 0; x < atts.length(); x++) {
+                                    auto mapItem = atts.item(x);
+                                    auto attribute = mapItem.toAttr();
+                                    if (attribute.name() == "vh") {
+                                        if (attribute.value() == "V" || attribute.value() == "v") {
+                                            awayTeam.append(player);
+                                        } else {
+                                            homeTeam.append(player);
+                                        }
+                                        playerData = playerData.nextSiblingElement("player");
+                                        break;
+                                    }
+                                }
+                            }
+                            else {
+                                playerData = playerData.nextSiblingElement("player");
+                            }
+                        } catch (...) {
+                            playerData = playerData.nextSiblingElement("player");
+                        }
+                    }
+                }
+                QDomNode statusNode = doc.elementsByTagName("status").item(0);
+                QDomNamedNodeMap atts = statusNode.attributes();
+                for (int x = 0; x < atts.length(); x++) {
+                    auto mapItem = atts.item(x);
+                    auto attribute = mapItem.toAttr();
+                    if (attribute.name() == "game") {
+                        gameNum = attribute.value().toInt();
+                    } else if (attribute.name() == "hpoints") {
+                        hPoints = attribute.value().toInt();
+                    } else if (attribute.name() == "vpoints") {
+                        aPoints = attribute.value().toInt();
+                    } if (attribute.name() == "complete" && attribute.value().toLower() == "y") {
+                        gameOver = true;
                     }
                 }
             }
-            QDomNode statusNode = doc.elementsByTagName("status").item(0);
-            QDomNamedNodeMap atts = statusNode.attributes();
-            for (int x = 0; x < atts.length(); x++) {
-                auto mapItem = atts.item(x);
-                auto attribute = mapItem.toAttr();
-                if (attribute.name() == "game") {
-                    gameNum = attribute.value().toInt();
-                } else if (attribute.name() == "hscore") {
-                    hScore = attribute.value().toInt();
-                } else if (attribute.name() == "vscore") {
-                    aScore = attribute.value().toInt();
-                }else if (attribute.name() == "hpoints") {
-                    hPoints = attribute.value().toInt();
-                } else if (attribute.name() == "vpoints") {
-                    aPoints = attribute.value().toInt();
-                } if (attribute.name() == "complete" && attribute.value().toLower() == "y") {
-                    gameOver = true;
-                }
-            }
+        } catch (...) {
+            file.close();
         }
     } catch (...) {
 
@@ -134,9 +174,18 @@ void StatCrewReader::parseFile()
 void StatCrewReader::writeFile()
 {
     if (gameStarted) {
+        aScore = 0;
+        hScore = 0;
+        for (int i = 0; i < (gameOver ? gameNum: gameNum-1); i++) {
+            if (awayScores[i] > homeScores[i]) {
+                aScore++;
+            } else {
+                hScore++;
+            }
+        }
         QFile localFile(EspnVolleyball::getAppDirPath() + "/out.xml");
         //    QTextStream stream(&localFile);
-        if (!localFile.open(QIODevice::ReadWrite)) {
+        if (!localFile.open(QIODevice::ReadWrite|QIODevice::Truncate)) {
             return;
         }
         //    localFile.close();
@@ -216,13 +265,28 @@ void StatCrewReader::writeFile()
             }
         }
         writer.writeTextElement("status", setText);
+        for (int i = 1; i <= gameNum; i++) {
+            if (gameNum != i) {
+                if (awayScores[i-1] > homeScores[i-1]) {
+                    writer.writeTextElement("game"+QString::number(i), "1");
+                } else {
+                    writer.writeTextElement("game"+QString::number(i), "2");
+                }
+            } else {
+                if((hPoints > 24 || aPoints > 24) && abs(hPoints - aPoints) > 1) {
+                    writer.writeTextElement("game"+QString::number(i), hPoints < aPoints ? "1" : "2");
+                } else if((hPoints > 14 || aPoints > 14) && abs(hPoints - aPoints) > 1 &&i==5) {
+                    writer.writeTextElement("game"+QString::number(i), hPoints < aPoints ? "1" : "2");
+                }
+            }
+        }
         writer.writeEndElement();
         writer.writeEndDocument();
         localFile.close();
     } else {
         QFile localFile(EspnVolleyball::getAppDirPath() + "/out.xml");
         //    QTextStream stream(&localFile);
-        if (!localFile.open(QIODevice::ReadWrite)) {
+        if (!localFile.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
             return;
         }
         //    localFile.close();
@@ -232,6 +296,11 @@ void StatCrewReader::writeFile()
         writer.writeStartElement("gamestats");
 
         writer.writeTextElement("status", "Set 1 (Best of 5)");
+        writer.writeTextElement("game1", "0");
+        writer.writeTextElement("game2", "0");
+        writer.writeTextElement("game3", "0");
+        writer.writeTextElement("game4", "0");
+        writer.writeTextElement("game5", "0");
         writer.writeEndElement();
         writer.writeEndDocument();
         localFile.close();
@@ -245,7 +314,7 @@ void StatCrewReader::getStats()
 
 void StatCrewReader::fileIsReady( QNetworkReply * reply) {
     QFile inFile(EspnVolleyball::getAppDirPath() + "/in.xml");
-    inFile.open(QIODevice::ReadWrite);
+    inFile.open(QIODevice::ReadWrite|QIODevice::Truncate);
     inFile.write(reply->readAll());
 }
 
