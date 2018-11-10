@@ -8,6 +8,11 @@
 #include <QStringList>
 #include <QNetworkRequest>
 #include "EspnVolleyball.h"
+
+#define NORMAL_GAMEPLAY 0
+#define SET_OVER 1
+#define WAITING_FOR_NEXT_SET 2
+
 StatCrewReader::StatCrewReader(QObject *parent) : QObject(parent)
 {
     filepath="";
@@ -25,6 +30,7 @@ StatCrewReader::StatCrewReader(QObject *parent) : QObject(parent)
         awayScores.append(0);
         homeScores.append(0);
     }
+    statState = NORMAL_GAMEPLAY;
 }
 
 void StatCrewReader::parseFile()
@@ -174,6 +180,7 @@ void StatCrewReader::parseFile()
 void StatCrewReader::writeFile()
 {
     if (gameStarted) {
+        int gameNum = statState == WAITING_FOR_NEXT_SET ? this->gameNum+1:this->gameNum;
         aScore = 0;
         hScore = 0;
         for (int i = 0; i < (gameOver ? gameNum: gameNum-1); i++) {
