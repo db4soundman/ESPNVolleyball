@@ -7,6 +7,7 @@
 #include <QUrl>
 #include <QStringList>
 #include <QNetworkRequest>
+#include <QTimer>
 #include "EspnVolleyball.h"
 
 #define NORMAL_GAMEPLAY 0
@@ -26,6 +27,11 @@ StatCrewReader::StatCrewReader(QObject *parent) : QObject(parent)
     hPoints = 0;
     aPoints = 0;
     gameOver = false;
+//    waitingForSetChange = false;
+    prevGame = -1;
+    prevHPoints = -1;
+    prevAPoints = -1;
+//    showWinText = false;
     for(int i = 0; i < 5; i++) {
         awayScores.append(0);
         homeScores.append(0);
@@ -168,6 +174,11 @@ void StatCrewReader::parseFile()
                         gameOver = true;
                     }
                 }
+                if (statState == WAITING_FOR_NEXT_SET) {
+                    if (gameNum != prevGame || hPoints != prevHPoints || aPoints != prevAPoints) {
+                        statState = NORMAL_GAMEPLAY;
+                    }
+                }
             }
         } catch (...) {
             file.close();
@@ -190,6 +201,12 @@ void StatCrewReader::writeFile()
                 hScore++;
             }
         }
+//        if (waitingForSetChange && !showWinText) {
+//            gameNum++;
+//        }
+//        if (waitingForSetChange && showWinText) {
+//            return;
+//        }
         QFile localFile(EspnVolleyball::getAppDirPath() + "/out.xml");
         //    QTextStream stream(&localFile);
         if (!localFile.open(QIODevice::ReadWrite|QIODevice::Truncate)) {
@@ -212,19 +229,35 @@ void StatCrewReader::writeFile()
             p.toXml(&writer);
         }
         writer.writeEndElement();
-        QString setText = "";
+        setText = "";
         if (gameNum < 2) {
             setText = "Set 1 (Best of 5)";
             int scoreDif = abs(hPoints - aPoints);
             if (hPoints == 24 && aPoints < 24) {
                 setText = homeName + " Set Point";
+            } else if (hPoints == 25 && aPoints < 24) {
+                setText = homeName + " wins " + (hScore == 2 ? "match":("Set " + QString::number(gameNum)));
+                startWait();
             } else if (aPoints == 24 && hPoints < 24) {
                 setText = awayName + " Set Point";
-            } else if (aPoints >= 24  && hPoints >= 24 && scoreDif != 0) {
-                if (hPoints > aPoints) {
-                    setText = homeName + " Set Point";
-                } else {
-                    setText = awayName + " Set Point";
+            }  else if (aPoints == 25 && hPoints < 24) {
+                setText = awayName + " wins " +(aScore == 2 ? "match":("Set " + QString::number(gameNum)));
+                startWait();
+            }  else if (aPoints >= 24  && hPoints >= 24 && scoreDif != 0) {
+                if (scoreDif == 1) {
+                    if (hPoints > aPoints) {
+                        setText = homeName + (hScore != 2 ? " Set Point" : " Match Point");
+                    } else {
+                        setText = awayName +  (aScore != 2 ? " Set Point" : " Match Point");
+                    }
+                } if (scoreDif == 2) {
+                    if (hPoints > aPoints) {
+                        setText = homeName + " wins " + (hScore == 2 ? "match":("Set " + QString::number(gameNum)));
+                        startWait();
+                    } else {
+                        setText = awayName + " wins " +(aScore == 2 ? "match":("Set " + QString::number(gameNum)));
+                        startWait();
+                    }
                 }
             }
         } else if (gameNum < 5) {
@@ -236,31 +269,50 @@ void StatCrewReader::writeFile()
             } else {
                 setText += "("+ awayName +" leads " + QString::number(aScore) + "-" + QString::number(hScore) +")";
             }
-            int scoreDif = abs(hPoints - aPoints);
-            if (hPoints == 24 && aPoints < 24) {
-                setText = homeName + (hScore != 2 ? " Set Point" : " Match Point");
-            } else if (aPoints == 24 && hPoints < 24) {
-                setText = awayName + (aScore != 2 ? " Set Point" : " Match Point");
-            } else if (aPoints >= 24  && hPoints >= 24 && scoreDif != 0) {
-                if (hPoints > aPoints) {
+            if (statState != WAITING_FOR_NEXT_SET) {
+                int scoreDif = abs(hPoints - aPoints);
+                if (hPoints == 24 && aPoints < 24) {
                     setText = homeName + (hScore != 2 ? " Set Point" : " Match Point");
-                } else {
-                    setText = awayName +  (aScore != 2 ? " Set Point" : " Match Point");
+                } else if (hPoints == 25 && aPoints < 24) {
+                    setText = homeName + " wins " + (hScore == 2 ? "match":("Set " + QString::number(gameNum)));
+                    startWait();
+                } else if (aPoints == 24 && hPoints < 24) {
+                    setText = awayName + (aScore != 2 ? " Set Point" : " Match Point");
+                } else if (aPoints == 25 && hPoints < 24) {
+                    setText = awayName + " wins " +(aScore == 2 ? "match":("Set " + QString::number(gameNum)));
+                    startWait();
+                } else if (aPoints >= 24  && hPoints >= 24 && scoreDif != 0) {
+                    if (scoreDif == 1) {
+                        if (hPoints > aPoints) {
+                            setText = homeName + (hScore != 2 ? " Set Point" : " Match Point");
+                        } else {
+                            setText = awayName +  (aScore != 2 ? " Set Point" : " Match Point");
+                        }
+                    } if (scoreDif == 2) {
+                        if (hPoints > aPoints) {
+                            setText = homeName + " wins " + (hScore == 2 ? "match":("Set " + QString::number(gameNum)));
+                            startWait();
+                        } else {
+                            setText = awayName + " wins " +(aScore == 2 ? "match":("Set " + QString::number(gameNum)));
+                            startWait();
+                        }
+                    }
                 }
             }
         } else {
             setText = "Set 5 (Tied 2-2)";
-
-            int scoreDif = abs(hPoints - aPoints);
-            if (hPoints == 14 && aPoints < 14) {
-                setText = homeName + " Match Point";
-            } else if (aPoints == 14 && hPoints < 14) {
-                setText = awayName + " Match Point";
-            } else if (aPoints >= 14  && hPoints >= 14 && scoreDif != 0) {
-                if (hPoints > aPoints) {
+            if(statState != WAITING_FOR_NEXT_SET) {
+                int scoreDif = abs(hPoints - aPoints);
+                if (hPoints == 14 && aPoints < 14) {
                     setText = homeName + " Match Point";
-                } else {
+                } else if (aPoints == 14 && hPoints < 14) {
                     setText = awayName + " Match Point";
+                } else if (aPoints >= 14  && hPoints >= 14 && scoreDif != 0) {
+                    if (hPoints > aPoints) {
+                        setText = homeName + " Match Point";
+                    } else {
+                        setText = awayName + " Match Point";
+                    }
                 }
             }
         }
@@ -338,6 +390,26 @@ void StatCrewReader::setHomeName(QString name)
 void StatCrewReader::setWinningChar(QString value)
 {
     setWinnerChar = value;
+}
+
+void StatCrewReader::enterWaitingState()
+{
+
+}
+
+void StatCrewReader::advanceSetInWaitingState()
+{
+    if (statState == SET_OVER)
+        statState = WAITING_FOR_NEXT_SET;
+}
+
+void StatCrewReader::startWait()
+{
+    prevGame = gameNum;
+    prevAPoints = aPoints;
+    prevHPoints = hPoints;
+    statState = SET_OVER;
+    QTimer::singleShot(1000 * 45, this, SLOT(advanceSetInWaitingState()));
 }
 
 bool StatCrewReader::checkDefaultFile()
