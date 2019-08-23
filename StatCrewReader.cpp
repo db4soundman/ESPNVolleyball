@@ -42,7 +42,8 @@ StatCrewReader::StatCrewReader(QObject *parent) : QObject(parent)
 void StatCrewReader::parseFile()
 {
     QDomDocument doc;
-    QFile file(EspnVolleyball::getAppDirPath() + "/in.xml");
+    //QFile file(EspnVolleyball::getAppDirPath() + "/in.xml");
+    QFile file(filepath);
     try {
         if (!file.open(QIODevice::ReadWrite) || !doc.setContent(&file)) {
             return;
@@ -418,12 +419,12 @@ bool StatCrewReader::checkDefaultFile()
     QFile defaultFile(EspnVolleyball::getAppDirPath()+"/filepath.txt");
     if (defaultFile.exists() && defaultFile.open(QIODevice::ReadWrite)) {
         QTextStream stream(&defaultFile);
-        filepath = stream.readAll().trimmed();
-        //        QFile firstFile(temp);
-        //        if (firstFile.exists()) {
-        //            filepath = temp;
-        //            return true;
-        //        }
+        temp = stream.readAll().trimmed();
+        QFile firstFile(temp);
+        if (firstFile.exists()) {
+            filepath = temp;
+            return true;
+        }
     }
     return false;
 }

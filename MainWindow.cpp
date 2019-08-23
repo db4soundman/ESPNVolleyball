@@ -1,26 +1,29 @@
 #include "MainWindow.h"
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QVBoxLayout>
+#include <QFormLayout>
 
 void MainWindow::checkDefaultFile()
 {
-//    if (!reader.checkDefaultFile()) {
-//        QMessageBox msg;
-//        msg.setText("No file currently set. Please set a file to begin parsing.");
-//        msg.exec();
-//    } else{
-    reader.checkDefaultFile();
+    if (!reader.checkDefaultFile()) {
+        QMessageBox msg;
+        msg.setText("No file currently set. Please set a file to begin parsing.");
+        msg.exec();
+    } else{
         timer.start();
-//    }
+
+    }
 }
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    fileButton.setText("Set File");
-    connect(&fileButton, SIGNAL(clicked(bool)), this, SLOT(browseForFile()));
+
+    connect(&ui, SIGNAL(needToBrowse()), this, SLOT(browseForFile()));
     timer.setInterval(1500);
     connect(&timer, SIGNAL(timeout()), this, SLOT(handleTimeout()));
+    connect(this, SIGNAL(updatePath(QString)), &ui, SLOT(updatePath(QString)));
     setCentralWidget(&ui);
 
     connect(&ui.awayName, SIGNAL(textEdited(QString)), &reader, SLOT(setAwayName(QString)));
@@ -40,12 +43,13 @@ void MainWindow::browseForFile()
     if (!path.isEmpty()) {
         reader.setFilepath(path);
         timer.start();
+        emit updatePath(path);
     }
 }
 
 void MainWindow::handleTimeout()
 {
-    reader.getStats();
+//    reader.getStats();
     reader.parseFile();
     reader.writeFile();
 }

@@ -6,6 +6,7 @@
 #include "StatCrewReader.h"
 #include <QTimer>
 #include "MainUi.h"
+#include <QLabel>
 
 class MainWindow : public QMainWindow
 {
@@ -16,6 +17,9 @@ public:
     ~MainWindow();
 
     void checkDefaultFile();
+
+signals:
+    void updatePath(QString);
     
 private slots:
     void browseForFile();
@@ -23,9 +27,9 @@ private slots:
 
 private:
     MainUi ui;
-    QPushButton fileButton;
     StatCrewReader reader;
     QTimer timer;
+
 };
 
 #endif // MAINWINDOW_H

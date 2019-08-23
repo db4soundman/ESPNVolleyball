@@ -201,7 +201,7 @@ QString VolleyballPlayer::getUniformStr() const
 
 void VolleyballPlayer::setUniformStr(const QString &value)
 {
-    uniformStr = value;
+    uniformStr = value.rightJustified(2,'0');
     uniformNum = value.toInt();
 }
 
