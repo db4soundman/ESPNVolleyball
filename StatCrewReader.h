@@ -40,7 +40,7 @@ private:
     QList<int> awayScores, homeScores;
     void nameCorrect(VolleyballPlayer& player, QString name);
     int gameNum, hScore, aScore, hPoints, aPoints, statState, prevGame, prevHPoints, prevAPoints;
-    bool gameStarted, gameOver;
+    bool gameStarted, gameOver, hasWrittenRosters;
     bool inGame1;
 
     void startWait();

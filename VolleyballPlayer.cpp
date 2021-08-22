@@ -166,6 +166,26 @@ void VolleyballPlayer::toXml(QXmlStreamWriter *stream)
 
 }
 
+void VolleyballPlayer::toRosterXml(QXmlStreamWriter *stream)
+{
+   // QXmlStreamWriter stream(dest);
+    stream->setAutoFormatting(true);
+    stream->writeStartElement("player");
+    stream->writeAttribute("xpnId", uniformStr);
+    stream->writeAttribute("jerseyNum", uniformStr);
+    stream->writeAttribute("fName", fullName.split(" ")[0]);
+    QStringList name = QStringList(fullName.split(" "));
+    name.removeFirst();
+    stream->writeAttribute("lName", name.join(" ").trimmed());
+    stream->writeAttribute("initialName", QString(fullName.at(0)) + ". " + name.join(" ").trimmed());
+    stream->writeAttribute("fullName", fullName);
+    stream->writeAttribute("posAbbrev", "");
+    stream->writeAttribute("pos", "");
+
+    stream->writeEndElement();// player
+
+}
+
 QString VolleyballPlayer::getStatLabel(int stat)
 {
     if (stat == kills) return "KILLS";
@@ -191,7 +211,23 @@ QString VolleyballPlayer::getFullName() const
 
 void VolleyballPlayer::setFullName(const QString &value)
 {
-    fullName = value;
+    QString name;
+    if (!value.contains(",")) {
+        name = value;
+    }
+    else if (value.contains(", ")){
+        std::string goodName = value.toStdString();
+        QString firstName = QString::fromStdString(goodName.substr(goodName.find(" ") + 1, goodName.length()));
+        QString lastName = QString::fromStdString(goodName.substr(0, goodName.find(",")));
+        name = firstName.toUpper() + " " + lastName.toUpper();
+    }
+    else if (value.contains(",")) {
+        std::string goodName = value.toStdString();
+        QString firstName = QString::fromStdString(goodName.substr(goodName.find(",") + 1, goodName.length()));
+        QString lastName = QString::fromStdString(goodName.substr(0, goodName.find(",")));
+        name = firstName.toUpper() + " " + lastName.toUpper();
+    }
+    fullName = name;
 }
 
 QString VolleyballPlayer::getUniformStr() const

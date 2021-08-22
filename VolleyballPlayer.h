@@ -62,6 +62,8 @@ public:
     int getBlockAttempts() const;
     void setBlockAttempts(int value);
 
+    void toRosterXml(QXmlStreamWriter *stream);
+
 signals:
 
 public slots:

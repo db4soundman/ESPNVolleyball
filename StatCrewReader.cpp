@@ -37,6 +37,7 @@ StatCrewReader::StatCrewReader(QObject *parent) : QObject(parent)
         homeScores.append(0);
     }
     statState = NORMAL_GAMEPLAY;
+    hasWrittenRosters = false;
 }
 
 void StatCrewReader::parseFile()
@@ -209,12 +210,9 @@ void StatCrewReader::writeFile()
 //            return;
 //        }
         QFile localFile(EspnVolleyball::getAppDirPath() + "/out.xml");
-        //    QTextStream stream(&localFile);
         if (!localFile.open(QIODevice::ReadWrite|QIODevice::Truncate)) {
             return;
         }
-        //    localFile.close();
-        QString output = "";
         QXmlStreamWriter writer(&localFile);
         writer.writeStartDocument();
         writer.writeStartElement("gamestats");
@@ -230,101 +228,6 @@ void StatCrewReader::writeFile()
             p.toXml(&writer);
         }
         writer.writeEndElement();
-        setText = "";
-        if (gameNum < 2) {
-            setText = "Set 1 (Best of 5)";
-            int scoreDif = abs(hPoints - aPoints);
-            if (hPoints == 24 && aPoints < 24) {
-                setText = homeName + " Set Point";
-            } else if (hPoints == 25 && aPoints < 24) {
-                setText = homeName + " wins " + (hScore == 2 ? "match":("Set " + QString::number(gameNum)));
-                startWait();
-            } else if (aPoints == 24 && hPoints < 24) {
-                setText = awayName + " Set Point";
-            }  else if (aPoints == 25 && hPoints < 24) {
-                setText = awayName + " wins " +(aScore == 2 ? "match":("Set " + QString::number(gameNum)));
-                startWait();
-            }  else if (aPoints >= 24  && hPoints >= 24 && scoreDif != 0) {
-                if (scoreDif == 1) {
-                    if (hPoints > aPoints) {
-                        setText = homeName + (hScore != 2 ? " Set Point" : " Match Point");
-                    } else {
-                        setText = awayName +  (aScore != 2 ? " Set Point" : " Match Point");
-                    }
-                } if (scoreDif == 2) {
-                    if (hPoints > aPoints) {
-                        setText = homeName + " wins " + (hScore == 2 ? "match":("Set " + QString::number(gameNum)));
-                        startWait();
-                    } else {
-                        setText = awayName + " wins " +(aScore == 2 ? "match":("Set " + QString::number(gameNum)));
-                        startWait();
-                    }
-                }
-            }
-        } else if (gameNum < 5) {
-            setText = "Set " + QString::number(gameNum) + " ";
-            if (hScore == aScore) {
-                setText += "(Tied " + QString::number(hScore) + "-" + QString::number(hScore) +")";
-            } else if (hScore > aScore) {
-                setText += "("+ homeName +" leads " + QString::number(hScore) + "-" + QString::number(aScore) +")";
-            } else {
-                setText += "("+ awayName +" leads " + QString::number(aScore) + "-" + QString::number(hScore) +")";
-            }
-            if (statState != WAITING_FOR_NEXT_SET) {
-                int scoreDif = abs(hPoints - aPoints);
-                if (hPoints == 24 && aPoints < 24) {
-                    setText = homeName + (hScore != 2 ? " Set Point" : " Match Point");
-                } else if (hPoints == 25 && aPoints < 24) {
-                    setText = homeName + " wins " + (hScore == 2 ? "match":("Set " + QString::number(gameNum)));
-                    startWait();
-                } else if (aPoints == 24 && hPoints < 24) {
-                    setText = awayName + (aScore != 2 ? " Set Point" : " Match Point");
-                } else if (aPoints == 25 && hPoints < 24) {
-                    setText = awayName + " wins " +(aScore == 2 ? "match":("Set " + QString::number(gameNum)));
-                    startWait();
-                } else if (aPoints >= 24  && hPoints >= 24 && scoreDif != 0) {
-                    if (scoreDif == 1) {
-                        if (hPoints > aPoints) {
-                            setText = homeName + (hScore != 2 ? " Set Point" : " Match Point");
-                        } else {
-                            setText = awayName +  (aScore != 2 ? " Set Point" : " Match Point");
-                        }
-                    } if (scoreDif == 2) {
-                        if (hPoints > aPoints) {
-                            setText = homeName + " wins " + (hScore == 2 ? "match":("Set " + QString::number(gameNum)));
-                            startWait();
-                        } else {
-                            setText = awayName + " wins " +(aScore == 2 ? "match":("Set " + QString::number(gameNum)));
-                            startWait();
-                        }
-                    }
-                }
-            }
-        } else {
-            setText = "Set 5 (Tied 2-2)";
-            if(statState != WAITING_FOR_NEXT_SET) {
-                int scoreDif = abs(hPoints - aPoints);
-                if (hPoints == 14 && aPoints < 14) {
-                    setText = homeName + " Match Point";
-                } else if (aPoints == 14 && hPoints < 14) {
-                    setText = awayName + " Match Point";
-                } else if (aPoints >= 14  && hPoints >= 14 && scoreDif != 0) {
-                    if (hPoints > aPoints) {
-                        setText = homeName + " Match Point";
-                    } else {
-                        setText = awayName + " Match Point";
-                    }
-                }
-            }
-        }
-        if (gameOver) {
-            if (hScore > aScore) {
-                setText = homeName + " wins " + QString::number(hScore) + "-" + QString::number(aScore);
-            } else {
-                setText = awayName + " wins " + QString::number(aScore) + "-" + QString::number(hScore);
-            }
-        }
-        writer.writeTextElement("status", setText);
         for (int i = 1; i <= gameNum; i++) {
             if (gameNum != i) {
                 if (awayScores[i-1] > homeScores[i-1]) {
@@ -343,6 +246,52 @@ void StatCrewReader::writeFile()
         writer.writeEndElement();
         writer.writeEndDocument();
         localFile.close();
+        if (!hasWrittenRosters) {
+            QFile awayRoster(EspnVolleyball::getAppDirPath() + "/aroster.xml");
+            if (!awayRoster.open(QIODevice::ReadWrite|QIODevice::Truncate)) {
+                return;
+            }
+            QXmlStreamWriter awriter(&awayRoster);
+            awriter.writeStartDocument();
+            awriter.writeStartElement("team");
+            awriter.writeStartElement("teaminfo");
+            awriter.writeEndElement();
+            awriter.writeStartElement("roster");
+            awriter.writeStartElement("players");
+            for (int i = 0; i < awayTeam.size(); i++) {
+                VolleyballPlayer p(awayTeam.at(i));
+                p.toRosterXml(&awriter);
+            }
+            awriter.writeEndElement();//players
+            awriter.writeEndElement();//roster
+            awriter.writeEndElement();//team
+            awriter.writeEndDocument();
+            awayRoster.close();
+
+            QFile homeRoster(EspnVolleyball::getAppDirPath() + "/hroster.xml");
+            if (!homeRoster.open(QIODevice::ReadWrite|QIODevice::Truncate)) {
+                return;
+            }
+            QXmlStreamWriter hwriter(&homeRoster);
+            hwriter.writeStartDocument();
+            hwriter.writeStartElement("team");
+            hwriter.writeStartElement("teaminfo");
+            hwriter.writeEndElement();
+            hwriter.writeStartElement("roster");
+            hwriter.writeStartElement("players");
+            for (int i = 0; i < homeTeam.size(); i++) {
+                VolleyballPlayer p(homeTeam.at(i));
+                p.toRosterXml(&hwriter);
+            }
+            hwriter.writeEndElement();//players
+            hwriter.writeEndElement();//roster
+            hwriter.writeEndElement();//team
+            hwriter.writeEndDocument();
+            homeRoster.close();
+            hasWrittenRosters = true;
+        }
+
+
     } else {
         QFile localFile(EspnVolleyball::getAppDirPath() + "/out.xml");
         //    QTextStream stream(&localFile);
@@ -350,7 +299,6 @@ void StatCrewReader::writeFile()
             return;
         }
         //    localFile.close();
-        QString output = "";
         QXmlStreamWriter writer(&localFile);
         writer.writeStartDocument();
         writer.writeStartElement("gamestats");
@@ -437,4 +385,5 @@ QString StatCrewReader::getFilepath() const
 void StatCrewReader::setFilepath(const QString &value)
 {
     filepath = value;
+    hasWrittenRosters = false;
 }
