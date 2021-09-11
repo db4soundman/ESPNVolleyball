@@ -24,10 +24,20 @@ MainWindow::MainWindow(QWidget *parent)
     timer.setInterval(1500);
     connect(&timer, SIGNAL(timeout()), this, SLOT(handleTimeout()));
     connect(this, SIGNAL(updatePath(QString)), &ui, SLOT(updatePath(QString)));
-    setCentralWidget(&ui);
+    setCentralWidget(&mainView);
+    infoDock.setWidget(&ui);
+
+    addDockWidget(Qt::TopDockWidgetArea, &infoDock);
 
     connect(&ui.awayName, SIGNAL(textEdited(QString)), &reader, SLOT(setAwayName(QString)));
     connect(&ui.homeName, SIGNAL(textEdited(QString)), &reader, SLOT(setHomeName(QString)));
+    connect(&ui.awayTri, SIGNAL(textEdited(QString)), &reader, SLOT(setAwayTri(QString)));
+    connect(&ui.homeTri, SIGNAL(textEdited(QString)), &reader, SLOT(setHomeTri(QString)));
+    connect(&ui.awayName, SIGNAL(textEdited(QString)), &mainView, SLOT(setAwayName(QString)));
+    connect(&ui.homeName, SIGNAL(textEdited(QString)), &mainView, SLOT(setHomeName(QString)));
+
+    connect(&reader, SIGNAL(awayStatsUpdated(QList<VolleyballPlayer>)), &mainView, SLOT(updateAwayStats(QList<VolleyballPlayer>)));
+    connect(&reader, SIGNAL(homeStatsUpdated(QList<VolleyballPlayer>)), &mainView, SLOT(updateHomeStats(QList<VolleyballPlayer>)));
 }
 
 MainWindow::~MainWindow()

@@ -13,7 +13,7 @@ class MainUi : public QWidget
 public:
     explicit MainUi(QWidget *parent = nullptr);
 
-    QLineEdit homeName, awayName, setWinnerMarking;
+    QLineEdit homeName, awayName, setWinnerMarking, awayTri, homeTri;
 
 signals:
     void needToBrowse();

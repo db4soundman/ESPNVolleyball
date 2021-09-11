@@ -7,6 +7,8 @@
 #include <QTimer>
 #include "MainUi.h"
 #include <QLabel>
+#include <QDockWidget>
+#include "StatCrewView.h"
 
 class MainWindow : public QMainWindow
 {
@@ -29,7 +31,8 @@ private:
     MainUi ui;
     StatCrewReader reader;
     QTimer timer;
-
+    QDockWidget infoDock;
+    StatCrewView mainView;
 };
 
 #endif // MAINWINDOW_H

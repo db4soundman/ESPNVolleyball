@@ -15,12 +15,14 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         MainWindow.cpp \
+    StatCrewView.cpp \
     VolleyballPlayer.cpp \
     StatCrewReader.cpp \
     EspnVolleyball.cpp \
     MainUi.cpp
 
 HEADERS  += MainWindow.h \
+    StatCrewView.h \
     VolleyballPlayer.h \
     StatCrewReader.h \
     EspnVolleyball.h \

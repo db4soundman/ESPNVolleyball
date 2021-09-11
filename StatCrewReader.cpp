@@ -246,50 +246,56 @@ void StatCrewReader::writeFile()
         writer.writeEndElement();
         writer.writeEndDocument();
         localFile.close();
-        if (!hasWrittenRosters) {
-            QFile awayRoster(EspnVolleyball::getAppDirPath() + "/aroster.xml");
-            if (!awayRoster.open(QIODevice::ReadWrite|QIODevice::Truncate)) {
-                return;
-            }
-            QXmlStreamWriter awriter(&awayRoster);
-            awriter.writeStartDocument();
-            awriter.writeStartElement("team");
-            awriter.writeStartElement("teaminfo");
-            awriter.writeEndElement();
-            awriter.writeStartElement("roster");
-            awriter.writeStartElement("players");
-            for (int i = 0; i < awayTeam.size(); i++) {
-                VolleyballPlayer p(awayTeam.at(i));
-                p.toRosterXml(&awriter);
-            }
-            awriter.writeEndElement();//players
-            awriter.writeEndElement();//roster
-            awriter.writeEndElement();//team
-            awriter.writeEndDocument();
-            awayRoster.close();
-
-            QFile homeRoster(EspnVolleyball::getAppDirPath() + "/hroster.xml");
-            if (!homeRoster.open(QIODevice::ReadWrite|QIODevice::Truncate)) {
-                return;
-            }
-            QXmlStreamWriter hwriter(&homeRoster);
-            hwriter.writeStartDocument();
-            hwriter.writeStartElement("team");
-            hwriter.writeStartElement("teaminfo");
-            hwriter.writeEndElement();
-            hwriter.writeStartElement("roster");
-            hwriter.writeStartElement("players");
-            for (int i = 0; i < homeTeam.size(); i++) {
-                VolleyballPlayer p(homeTeam.at(i));
-                p.toRosterXml(&hwriter);
-            }
-            hwriter.writeEndElement();//players
-            hwriter.writeEndElement();//roster
-            hwriter.writeEndElement();//team
-            hwriter.writeEndDocument();
-            homeRoster.close();
-            hasWrittenRosters = true;
+//        if (!hasWrittenRosters) {
+        QFile awayRoster(EspnVolleyball::getAppDirPath() + "/aroster.xml");
+        if (!awayRoster.open(QIODevice::ReadWrite|QIODevice::Truncate)) {
+            return;
         }
+        QXmlStreamWriter awriter(&awayRoster);
+        awriter.writeStartDocument();
+        awriter.writeStartElement("team");
+        awriter.writeStartElement("teaminfo");
+        awriter.writeAttribute("name", awayName);
+        awriter.writeAttribute("tricode", awayTri);
+        awriter.writeEndElement();
+        awriter.writeStartElement("roster");
+        awriter.writeStartElement("players");
+        for (int i = 0; i < awayTeam.size(); i++) {
+            VolleyballPlayer p(awayTeam.at(i));
+            p.toRosterXml(&awriter);
+        }
+        awriter.writeEndElement();//players
+        awriter.writeEndElement();//roster
+        awriter.writeEndElement();//team
+        awriter.writeEndDocument();
+        awayRoster.close();
+
+        QFile homeRoster(EspnVolleyball::getAppDirPath() + "/hroster.xml");
+        if (!homeRoster.open(QIODevice::ReadWrite|QIODevice::Truncate)) {
+            return;
+        }
+        QXmlStreamWriter hwriter(&homeRoster);
+        hwriter.writeStartDocument();
+        hwriter.writeStartElement("team");
+        hwriter.writeStartElement("teaminfo");
+        hwriter.writeAttribute("name", homeName);
+        hwriter.writeAttribute("tricode", homeTri);
+        hwriter.writeEndElement();
+        hwriter.writeStartElement("roster");
+        hwriter.writeStartElement("players");
+        for (int i = 0; i < homeTeam.size(); i++) {
+            VolleyballPlayer p(homeTeam.at(i));
+            p.toRosterXml(&hwriter);
+        }
+        hwriter.writeEndElement();//players
+        hwriter.writeEndElement();//roster
+        hwriter.writeEndElement();//team
+        hwriter.writeEndDocument();
+        homeRoster.close();
+        hasWrittenRosters = true;
+        emit awayStatsUpdated(awayTeam);
+        emit homeStatsUpdated(homeTeam);
+//        }
 
 
     } else {
@@ -334,6 +340,16 @@ void StatCrewReader::setAwayName(QString name)
 void StatCrewReader::setHomeName(QString name)
 {
     homeName = name;
+}
+
+void StatCrewReader::setAwayTri(QString name)
+{
+    awayTri=name;
+}
+
+void StatCrewReader::setHomeTri(QString name)
+{
+    homeTri = name;
 }
 
 void StatCrewReader::setWinningChar(QString value)

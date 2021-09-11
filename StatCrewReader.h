@@ -22,11 +22,15 @@ public:
     void setFilepath(const QString &value);
 
 signals:
+    void awayStatsUpdated(QList<VolleyballPlayer> awayTeam);
+    void homeStatsUpdated(QList<VolleyballPlayer> homeTeam);
 
 public slots:
     void fileIsReady(QNetworkReply* reply);
     void setAwayName(QString name);
     void setHomeName(QString name);
+    void setAwayTri(QString name);
+    void setHomeTri(QString name);
     void setWinningChar(QString value);
 
     void enterWaitingState();
@@ -34,7 +38,7 @@ public slots:
 
 private:
     QNetworkAccessManager* manager;
-    QString filepath, homeName, awayName, setWinnerChar;
+    QString filepath, homeName, awayName, setWinnerChar, homeTri, awayTri;
     QString setText;
     QList<VolleyballPlayer> awayTeam,homeTeam;
     QList<int> awayScores, homeScores;
